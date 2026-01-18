@@ -1,0 +1,93 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>📱 Phone File Server</title>
+  <style>
+    body {
+      font-family: system-ui, sans-serif;
+      background: #0f172a;
+      color: #e5e7eb;
+      padding: 30px;
+      max-width: 900px;
+      margin: auto;
+    }
+    button {
+      padding: 6px 12px;
+      background: #2563eb;
+      color: white;
+      border: none;
+      border-radius: 6px;
+      cursor: pointer;
+    }
+    ul { list-style: none; padding: 0; }
+    li {
+      background: #020617;
+      margin: 8px 0;
+      padding: 10px;
+      border-radius: 6px;
+      display: flex;
+      justify-content: space-between;
+    }
+    a { color: #60a5fa; margin-right: 10px; }
+  </style>
+</head>
+<body>
+
+<h1>📱 Phone File Server</h1>
+<h2>All files here are hosted and stored in Redmi Note 11 which is acting as a server</h2>
+<input type="file" id="fileInput">
+<button onclick="uploadFile()">Upload</button>
+
+<h3>Files</h3>
+<ul id="fileList"></ul>
+
+<script>
+const API = "http://<your phone ip wlan0 in termux>:3000";
+
+async function uploadFile() {
+  const file = document.getElementById("fileInput").files[0];
+  if (!file) return alert("Select a file");
+
+  const form = new FormData();
+  form.append("file", file);
+
+  await fetch(API + "/upload", {
+    method: "POST",
+    body: form
+  });
+
+  loadFiles();
+}
+
+async function loadFiles() {
+  const res = await fetch(API + "/files");
+  const files = await res.json();
+
+  const list = document.getElementById("fileList");
+  list.innerHTML = "";
+
+  files.forEach(name => {
+    const li = document.createElement("li");
+    li.innerHTML = `
+      <span>${name}</span>
+      <span>
+        <a href="${API}/files/${name}" target="_blank">View</a>
+        <a href="${API}/stream/${name}" target="_blank">Stream</a>
+        <button onclick="deleteFile('${name}')">Delete</button>
+      </span>
+    `;
+    list.appendChild(li);
+  });
+}
+
+async function deleteFile(name) {
+  await fetch(API + "/files/" + name, { method: "DELETE" });
+  loadFiles();
+}
+
+loadFiles();
+</script>
+
+</body>
+</html>
